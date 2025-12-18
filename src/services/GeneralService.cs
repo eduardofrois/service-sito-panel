@@ -39,5 +39,28 @@ namespace ServiceSitoPanel.src.services
 
             return new SuccessResponse<List<Client>>(true, 200, SuccessMessages.ClientsRetrieved, clients);
         }
+
+        public async Task<IResponses> CreateClient(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                return new ErrorResponse(false, 400, "Nome do cliente é obrigatório");
+
+            var existingClient = await _context.client
+                .FirstOrDefaultAsync(c => c.name.Trim().ToUpper() == name.Trim().ToUpper());
+
+            if (existingClient != null)
+                return new SuccessResponse<Client>(true, 200, "Cliente já existe", existingClient);
+
+            var newClient = new Client
+            {
+                name = name.Trim(),
+                tenant_id = _context.CurrentTenantId
+            };
+
+            await _context.client.AddAsync(newClient);
+            await _context.SaveChangesAsync();
+
+            return new SuccessResponse<Client>(true, 201, "Cliente criado com sucesso", newClient);
+        }
     }
 }

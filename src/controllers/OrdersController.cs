@@ -90,6 +90,24 @@ namespace ServiceSitoPanel.src.controllers
         }
 
         [Authorize]
+        [HttpGet("filter")]
+        public async Task<IActionResult> GetOrdersWithFilters(
+            DateTime? dateStart = null,
+            DateTime? dateEnd = null,
+            [FromQuery] int[]? statuses = null,
+            int? clientId = null,
+            int? supplierId = null,
+            int pageNumber = 1,
+            int pageSize = 10)
+        {
+            var result = await _repo.GetOrdersWithFilters(dateStart, dateEnd, statuses, clientId, supplierId, pageNumber, pageSize);
+
+            if (!result.Flag) ResponseHelper.HandleError(this, result);
+
+            return Ok(result);
+        }
+
+        [Authorize]
         [HttpPatch("update-paid-price")]
         public async Task<IActionResult> UpdatePaidPrice([FromBody] UpdatePaidPriceDto[] dto)
         {

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Threading.Tasks;
 using ServiceSitoPanel.src.enums;
@@ -30,8 +31,13 @@ namespace ServiceSitoPanel.src.model
         public DateTime? date_conference { get; set; }
         public DateTime? date_delivery { get; set; }
         public Double? price_paid { get; set; }
+        public int? supplier { get; set; }
 
         // joins 
+        [ForeignKey("client")]
         public Client ClientJoin { get; set; }
+        
+        [ForeignKey("supplier")]
+        public Supplier SupplierJoin { get; set; }
     }
 }

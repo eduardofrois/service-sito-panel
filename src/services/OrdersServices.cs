@@ -32,7 +32,7 @@ namespace ServiceSitoPanel.src.services
         {
             var query = _context.orders
                 .Include(orders => orders.ClientJoin)
-                .Where(o => o.ClientJoin != null);
+                .Include(orders => orders.SupplierJoin);
 
             var totalCount = await query.CountAsync();
 
@@ -65,6 +65,7 @@ namespace ServiceSitoPanel.src.services
 
             var query = _context.orders
                 .Include(orders => orders.ClientJoin)
+                .Include(orders => orders.SupplierJoin)
                 .Where(o => statues.Contains(o.status));
             
             var totalCount = await query.CountAsync();
@@ -92,17 +93,73 @@ namespace ServiceSitoPanel.src.services
             );
         }
 
+        public async Task<IResponses> GetOrdersWithFilters(DateTime? dateStart, DateTime? dateEnd, int[]? statuses, int? clientId, int? supplierId, int pageNumber, int pageSize)
+        {
+            var query = _context.orders
+                .Include(o => o.ClientJoin)
+                .Include(o => o.SupplierJoin)
+                .AsQueryable();
+
+            // Filter by date range
+            if (dateStart.HasValue)
+                query = query.Where(o => o.date_creation_order >= dateStart.Value);
+
+            if (dateEnd.HasValue)
+                query = query.Where(o => o.date_creation_order <= dateEnd.Value);
+
+            // Filter by statuses
+            if (statuses != null && statuses.Length > 0)
+            {
+                var statusStrings = statuses.SelectMany(s => HandleFunctions.SelectOneOrMoreStatus(s)).Distinct().ToList();
+                query = query.Where(o => statusStrings.Contains(o.status));
+            }
+
+            // Filter by client
+            if (clientId.HasValue)
+                query = query.Where(o => o.client == clientId.Value);
+
+            // Filter by supplier
+            if (supplierId.HasValue)
+                query = query.Where(o => o.supplier == supplierId.Value);
+
+            var totalCount = await query.CountAsync();
+
+            if (totalCount == 0)
+                return new ErrorResponse(false, 404, ErrorMessages.NoOrdersFound);
+
+            var pagedOrders = await query
+                .OrderByDescending(o => o.date_creation_order)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var mappedOrders = pagedOrders.Select(o => o.ToReadAllOrders());
+
+            return new SuccessResponseWithPagination<ReadOrdersDto>(
+                true,
+                200,
+                SuccessMessages.OrdersRetrieved,
+                totalCount,
+                pageNumber,
+                pageSize,
+                (int)Math.Ceiling((double)totalCount / pageSize),
+                mappedOrders
+            );
+        }
+
         public async Task<IResponses> CreateOrder([FromBody] CreateOrderDto[] orders)
         {
             if (orders == null || orders.Length == 0)
                 return new ErrorResponse(false, 500, ErrorMessages.MissingOrderFields);
 
             var clients = await _context.client.ToListAsync();
+            var suppliers = await _context.supplier.ToListAsync();
 
             List<Orders> ordersArray = new List<Orders>();
 
             foreach (var orderDto in orders)
             {
+                // Handle Client
                 var existingClient = clients
                     .FirstOrDefault(c => c.name.Trim().ToUpper() == orderDto.client.Trim().ToUpper());
 
@@ -122,7 +179,33 @@ namespace ServiceSitoPanel.src.services
                     clients.Add(mappedClient);
                 }
 
-                var mappedOrder = orderDto.ToCreateOrder(_context.CurrentTenantId, clientId);
+                // Handle Supplier
+                int? supplierId = null;
+                if (!string.IsNullOrWhiteSpace(orderDto.supplier))
+                {
+                    var existingSupplier = suppliers
+                        .FirstOrDefault(s => s.name.Trim().ToUpper() == orderDto.supplier.Trim().ToUpper());
+
+                    if (existingSupplier != null)
+                    {
+                        supplierId = existingSupplier.id;
+                    }
+                    else
+                    {
+                        var newSupplier = new Supplier
+                        {
+                            name = orderDto.supplier.Trim(),
+                            tenant_id = _context.CurrentTenantId
+                        };
+                        await _context.supplier.AddAsync(newSupplier);
+                        await _context.SaveChangesAsync();
+                        supplierId = newSupplier.id;
+
+                        suppliers.Add(newSupplier);
+                    }
+                }
+
+                var mappedOrder = orderDto.ToCreateOrder(_context.CurrentTenantId, clientId, supplierId);
                 await _context.orders.AddAsync(mappedOrder);
                 ordersArray.Add(mappedOrder);
             }

@@ -38,5 +38,21 @@ namespace ServiceSitoPanel.src.controllers
 
             return Ok(result);
         }
+
+        [Authorize]
+        [HttpPost("clients")]
+        public async Task<IActionResult> CreateClient([FromBody] CreateClientDto dto)
+        {
+            var result = await _general.CreateClient(dto.name);
+
+            if (!result.Flag) ResponseHelper.HandleError(this, result);
+
+            return Ok(result);
+        }
+    }
+
+    public class CreateClientDto
+    {
+        public string name { get; set; }
     }
 }

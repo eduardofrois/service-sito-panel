@@ -38,15 +38,23 @@ namespace ServiceSitoPanel.src.mappers
                     client_id = orders.ClientJoin.id,
                     client_name = orders.ClientJoin.name
                 }
+                : null,
+                supplier_infos = orders.SupplierJoin != null
+                ? new SupplierDto
+                {
+                    supplier_id = orders.SupplierJoin.id,
+                    supplier_name = orders.SupplierJoin.name
+                }
                 : null
             };
         }
 
-        public static Orders ToCreateOrder(this CreateOrderDto order, int tenant_id, int client_id)
+        public static Orders ToCreateOrder(this CreateOrderDto order, int tenant_id, int client_id, int? supplier_id)
         {
             return new Orders
             {
                 client = client_id,
+                supplier = supplier_id,
                 brand = order.brand,
                 code = order.code,
                 description = order.description,

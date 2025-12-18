@@ -9,5 +9,6 @@ namespace ServiceSitoPanel.src.interfaces
     {
         Task<IResponses> GetAllProfiles();
         Task<IResponses> GetAllClients();
+        Task<IResponses> CreateClient(string name);
     }
 }

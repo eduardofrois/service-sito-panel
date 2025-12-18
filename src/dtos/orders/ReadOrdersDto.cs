@@ -23,6 +23,7 @@ namespace ServiceSitoPanel.src.dtos.orders
         public DateTime? date_order { get; set; }
         public DateTime? date_purchase_order { get; set; }
         public ClientDto? client_infos { get; set; }
+        public SupplierDto? supplier_infos { get; set; }
         public string? status_conference { get; set; }
         public DateTime? date_conference { get; set; }
         public Double paid_price { get; set; }
@@ -32,5 +33,11 @@ namespace ServiceSitoPanel.src.dtos.orders
     {
         public int client_id { get; set; }
         public string client_name { get; set; }
+    };
+
+    public class SupplierDto
+    {
+        public int supplier_id { get; set; }
+        public string supplier_name { get; set; }
     };
 }

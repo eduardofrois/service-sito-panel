@@ -12,6 +12,7 @@ namespace ServiceSitoPanel.src.interfaces
     {
         Task<IResponses> GetAllOrders(int pageNumber, int pageSize);
         Task<IResponses> GetOrdersByStatus(int status, int pageNumber, int pageSize);
+        Task<IResponses> GetOrdersWithFilters(DateTime? dateStart, DateTime? dateEnd, int[]? statuses, int? clientId, int? supplierId, int pageNumber, int pageSize);
         Task<IResponses> CreateOrder([FromBody] CreateOrderDto[] order);
         Task<IResponses> UpdateOrderStatus([FromBody] int[] orders, [FromQuery] int value);
         Task<IResponses> NewClientInOrder([FromBody] NewClientInOrderDto values);
