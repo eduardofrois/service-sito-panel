@@ -70,14 +70,23 @@ namespace ServiceSitoPanel.src.functions
                         StatusOrder.NewStatus[Status.FullyPaid]
                     };
 
+                case 7:
+                    return new List<string> { StatusOrder.NewStatus[Status.ToCheck] };
+
+                case 8:
+                    return new List<string> { StatusOrder.NewStatus[Status.Checked] };
+
                 case 9:
                     return new List<string> { StatusOrder.NewStatus[Status.PartialPayment] };
 
                 case 10:
                     return new List<string> { StatusOrder.NewStatus[Status.FullyPaid] };
 
+                case 11:
+                    return new List<string> { StatusOrder.NewStatus[Status.DeliveredToClient] };
+
                 default:
-                    return null;
+                    return new List<string>(); // Return empty list instead of null to prevent NullReferenceException
             }
         }
 

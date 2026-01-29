@@ -264,7 +264,8 @@ namespace ServiceSitoPanel.src.services
         {
             var query = _context.orders
                 .Include(o => o.ClientJoin)
-                .Where(o => o.price_paid != o.total_price);
+                .Include(o => o.SupplierJoin)
+                .Where(o => o.status == StatusOrder.NewStatus[Status.DeliveredToClient]);
 
             var totalCount = await query.CountAsync();
 
@@ -310,13 +311,17 @@ namespace ServiceSitoPanel.src.services
 
                 // Atualiza o status automaticamente baseado no valor pago
                 // Só atualiza se o pedido estiver em um status relacionado a contas a pagar
+                // NÃO atualiza status para pedidos "Entregue ao Cliente" (Contas a Receber)
                 var currentStatus = order.status;
                 var isAccountsPayableStatus = currentStatus == StatusOrder.NewStatus[Status.ConfirmSale] ||
                                              currentStatus == StatusOrder.NewStatus[Status.PaidPurchase] ||
                                              currentStatus == StatusOrder.NewStatus[Status.PartialPayment] ||
                                              currentStatus == StatusOrder.NewStatus[Status.FullyPaid];
 
-                if (isAccountsPayableStatus)
+                // Skip status update for DeliveredToClient - these are for "Contas a Receber" and should keep their status
+                var isDeliveredToClient = currentStatus == StatusOrder.NewStatus[Status.DeliveredToClient];
+
+                if (isAccountsPayableStatus && !isDeliveredToClient)
                 {
                     var totalPrice = order.total_price ?? 0;
 
